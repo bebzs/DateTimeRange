@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace bebzs.DateTimeRange
 {
@@ -109,68 +105,35 @@ namespace bebzs.DateTimeRange
         }
 
         /// <summary>
-        /// Converts the value of the current System.DateTimeRange object to its equivalent string representation using the formatting conventions of the current culture.
+        /// Get the <see cref="DateTimeRange"/> which results of the instersection of the given <see cref="DateTimeRange"/> with the current instance.
         /// </summary>
-        /// <returns>A string representation of the value of the current System.DateTime object.</returns>
-        /// <exception cref="ArgumentOutOfRangeException">The date and time are outside the range of dates supported by the calendar used by the current culture.</exception>
-        public override string ToString()
+        /// <param name="range">The <see cref="DateTimeRange"/> to compare width the current instance.</param>
+        /// <returns>A <see cref="DateTimeRange"/> which results of the instersection of the given <see cref="DateTimeRange"/> with the current instance.</returns>
+        public DateTimeRange GetIntersection(DateTimeRange range)
         {
-            string result = string.Empty;
-            if (this.End.HasValue)
+            Intersection type = this.GetIntersectionType(range);
+            if (type == Intersection.RangesEqualed || type == Intersection.ContainedInRange)
             {
-                result = this.Start.ToString() + ", " + this.End.ToString();
+                return range;
+            }
+            else if (type == Intersection.PartiallyInRange)
+            {
+                if (IsInRange(range.Start))
+                {
+                    return new DateTimeRange(range.Start, this.End);
+                }
+                else
+                {
+                    return new DateTimeRange(this.Start, range.End);
+                }
+            }
+            else if (type == Intersection.ContainsRange)
+            {
+                return this;
             }
             else
             {
-                result = this.Start.ToString() + ", ";
-            }
-
-            switch (Interval)
-            {
-                case Interval.Open:
-                    result = "]" + result + "[";
-                    break;
-                case Interval.LeftCloseRightOpen:
-                    result = "[" + result + "[";
-                    break;
-                case Interval.LeftOpenRightClose:
-                    result = "]" + result + "]";
-                    break;
-                default:
-                    result = "[" + result + "]";
-                    break;
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Determines if the given <see cref="DateTimeRange"/> intersects this instance.
-        /// </summary>
-        /// <param name="range">The <see cref="DateTimeRange"/> to compare with the current instance.</param>
-        /// <returns>true if the <paramref name="range"/> intersects the current instance; otherwise, false.</returns>
-        public bool Intersects(DateTimeRange range)
-        {
-            return GetIntersectionType(range) != Intersection.None;
-        }
-
-        /// <summary>
-        /// Determines if the given <see cref="DateTime"/> is in the current <see cref="DateTimeRange"/>.
-        /// </summary>
-        /// <param name="date">The <see cref="DateTime"/> to compare with the current <see cref="DateTimeRange"/>.</param>
-        /// <returns>true if the <paramref name="date"/> is in the current <see cref="DateTimeRange"/>; otherwise, false.</returns>
-        public bool IsInRange(DateTime date)
-        {
-            switch (this.Interval)
-            {
-                case Interval.Open:
-                    return date > this.Start && date < this.End;
-                case Interval.LeftCloseRightOpen:
-                    return date >= this.Start && date < this.End;
-                case Interval.LeftOpenRightClose:
-                    return date > this.Start && date <= this.End;
-                default:
-                    return date >= this.Start && date <= this.End;
+                return default;
             }
         }
 
@@ -206,36 +169,69 @@ namespace bebzs.DateTimeRange
         }
 
         /// <summary>
-        /// Get the <see cref="DateTimeRange"/> which results of the instersection of the given <see cref="DateTimeRange"/> with the current instance.
+        /// Determines if the given <see cref="DateTimeRange"/> intersects this instance.
         /// </summary>
-        /// <param name="range">The <see cref="DateTimeRange"/> to compare width the current instance.</param>
-        /// <returns>A <see cref="DateTimeRange"/> which results of the instersection of the given <see cref="DateTimeRange"/> with the current instance.</returns>
-        public DateTimeRange GetIntersection(DateTimeRange range)
+        /// <param name="range">The <see cref="DateTimeRange"/> to compare with the current instance.</param>
+        /// <returns>true if the <paramref name="range"/> intersects the current instance; otherwise, false.</returns>
+        public bool Intersects(DateTimeRange range)
         {
-            Intersection type = this.GetIntersectionType(range);
-            if (type == Intersection.RangesEqualed || type == Intersection.ContainedInRange)
+            return GetIntersectionType(range) != Intersection.None;
+        }
+
+        /// <summary>
+        /// Determines if the given <see cref="DateTime"/> is in the current <see cref="DateTimeRange"/>.
+        /// </summary>
+        /// <param name="date">The <see cref="DateTime"/> to compare with the current <see cref="DateTimeRange"/>.</param>
+        /// <returns>true if the <paramref name="date"/> is in the current <see cref="DateTimeRange"/>; otherwise, false.</returns>
+        public bool IsInRange(DateTime date)
+        {
+            switch (this.Interval)
             {
-                return range;
+                case Interval.Open:
+                    return date > this.Start && date < this.End;
+                case Interval.LeftCloseRightOpen:
+                    return date >= this.Start && date < this.End;
+                case Interval.LeftOpenRightClose:
+                    return date > this.Start && date <= this.End;
+                default:
+                    return date >= this.Start && date <= this.End;
             }
-            else if (type == Intersection.PartiallyInRange)
+        }
+
+        /// <summary>
+        /// Converts the value of the current System.DateTimeRange object to its equivalent string representation using the formatting conventions of the current culture.
+        /// </summary>
+        /// <returns>A string representation of the value of the current System.DateTime object.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">The date and time are outside the range of dates supported by the calendar used by the current culture.</exception>
+        public override string ToString()
+        {
+            string result = string.Empty;
+            if (this.End.HasValue)
             {
-                if (IsInRange(range.Start))
-                {
-                    return new DateTimeRange(range.Start, this.End);
-                }
-                else
-                {
-                    return new DateTimeRange(this.Start, range.End);
-                }
-            }
-            else if (type == Intersection.ContainsRange)
-            {
-                return this;
+                result = this.Start.ToString() + ", " + this.End.ToString();
             }
             else
             {
-                return default;
+                result = this.Start.ToString() + ", ";
             }
+
+            switch (Interval)
+            {
+                case Interval.Open:
+                    result = "]" + result + "[";
+                    break;
+                case Interval.LeftCloseRightOpen:
+                    result = "[" + result + "[";
+                    break;
+                case Interval.LeftOpenRightClose:
+                    result = "]" + result + "]";
+                    break;
+                default:
+                    result = "[" + result + "]";
+                    break;
+            }
+
+            return result;
         }
     }
 }
